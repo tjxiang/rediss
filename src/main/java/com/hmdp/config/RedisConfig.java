@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Configuration;
 public class RedisConfig {
     @Bean
     public RedissonClient redissonClient(){
-//        Config config = new C;
         return null;
     }
 }
