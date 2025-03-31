@@ -1,7 +1,8 @@
 package com.hmdp.config;
 
-import jdk.nashorn.internal.runtime.regexp.joni.Config;
+import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
+import org.redisson.config.Config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -9,25 +10,8 @@ import org.springframework.context.annotation.Configuration;
 public class RedisConfig {
     @Bean
     public RedissonClient redissonClient(){
-        return null;
+        Config config = new Config();
+        config.useSingleServer().setAddress("127.0.0.1:6379");
+        return Redisson.create(config);
     }
 }
-////////////////////////////////////////
-
-// hot fix uodate
-//master
-
-//test
-
-//
-
-////////////////////////////////
-
-//-------------------------
-
-//***************************************
-///////////////////////
-
-//+++++++++++++++++++++++++++++++
-//ttttttttttttttttttttttttttttttttt
-/////////dasdsadadw
