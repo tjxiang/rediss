@@ -34,8 +34,8 @@ public class RefreshInterceptor implements HandlerInterceptor {
         }
 
 
-
-        UserHolder.saveUser(BeanUtil.fillBeanWithMap(userMap,new UserDTO(),false));
+        UserDTO userDTO = BeanUtil.fillBeanWithMap(userMap,new UserDTO(),false);
+        UserHolder.saveUser(userDTO);
 
 //        UserDTO user = (UserDTO) session.getAttribute("user");
 //        if (user == null){

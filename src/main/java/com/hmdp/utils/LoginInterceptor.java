@@ -56,7 +56,7 @@ public class LoginInterceptor implements HandlerInterceptor {
 //
 //        stringRedisTemplate.expire(LOGIN_USER_KEY + token,30, TimeUnit.MINUTES);
 
-        if (UserHolder.getUser() == null){
+        if (UserHolder.getUser() == null) {
             response.setStatus(401);
             return false;
         }

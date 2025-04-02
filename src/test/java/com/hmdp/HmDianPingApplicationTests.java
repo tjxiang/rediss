@@ -11,10 +11,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
 
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.hmdp.utils.RedisConstants.CACHE_SHOP_KEY;
 
@@ -35,8 +37,17 @@ class HmDianPingApplicationTests {
 
     @Test
     void test() throws Exception {
-        Shop shop = shopService.getById(1);
-        cacheUtil.setWithLogicalExpire(CACHE_SHOP_KEY + 1L, shop, 30l, TimeUnit.SECONDS);
+
+
+        shopService.list().stream().filter(it->it.getId()!=1).map(Shop::getId).collect(Collectors.toList()).forEach((id)->{
+            Shop shop = shopService.getById(id);
+            cacheUtil.setWithLogicalExpire(CACHE_SHOP_KEY + id, shop, 30l, TimeUnit.SECONDS);
+        });
+
+
+
+//        Shop shop = shopService.getById(1);
+//        cacheUtil.setWithLogicalExpire(CACHE_SHOP_KEY + 1L, shop, 30l, TimeUnit.SECONDS);
     }
 
     @Test
