@@ -204,7 +204,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
                 GeoReference.fromCoordinate(x, y),
                 new Distance(5000),
                 RedisGeoCommands.GeoSearchCommandArgs.newGeoSearchArgs().includeDistance().limit(end));
-
+//
         if (results == null) {
             return Result.ok(Collections.emptyList());
         }
