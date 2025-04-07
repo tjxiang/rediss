@@ -164,7 +164,6 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
 //    }
     @Override
     public Result seckillVoucher(Long id) {
-
         Long userId = UserHolder.getUser().getId();
         Long result = stringRedisTemplate.execute(seckillScript, Collections.emptyList(), id.toString(), userId.toString());
         if (result.intValue() != 0) {

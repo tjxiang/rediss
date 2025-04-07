@@ -99,5 +99,19 @@ public class UserController {
         return Result.ok(userDTO);
     }
 
+    @PostMapping("/sign")
+    public Result sign() {
+        // TODO 获取当前登录的用户并返回
+
+        return userService.sign();
+    }
+
+
+    @PostMapping("/sign/count")
+    public Result signCount() {
+        // TODO 获取当前登录的用户并返回
+
+        return userService.signCount();
+    }
 
 }

@@ -13,14 +13,24 @@ import com.hmdp.entity.User;
 import com.hmdp.mapper.UserMapper;
 import com.hmdp.service.IUserService;
 import com.hmdp.utils.RegexUtils;
+import com.hmdp.utils.UserHolder;
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
+import jodd.util.CollectionUtil;
+import org.springframework.data.redis.connection.BitFieldSubCommands;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import javax.jws.soap.SOAPBinding;
 import javax.servlet.http.HttpSession;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.hmdp.utils.RedisConstants.*;
@@ -39,6 +49,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
     @Override
     public Result sendCode(String phone, HttpSession session) {
         if (RegexUtils.isPhoneInvalid(phone)) {
@@ -48,7 +59,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
 //        session.setAttribute("code", code);
 
-        stringRedisTemplate.opsForValue().set(LOGIN_CODE_KEY + phone,code, LOGIN_CODE_TTL,TimeUnit.MINUTES);
+        stringRedisTemplate.opsForValue().set(LOGIN_CODE_KEY + phone, code, LOGIN_CODE_TTL, TimeUnit.MINUTES);
 
         log.debug("code:" + code);
 
@@ -76,13 +87,69 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
         session.setAttribute("user", userDTO);
 
-        stringRedisTemplate.opsForHash().putAll(LOGIN_USER_KEY + token,BeanUtil.beanToMap(userDTO,new HashMap<>(),
+        stringRedisTemplate.opsForHash().putAll(LOGIN_USER_KEY + token, BeanUtil.beanToMap(userDTO, new HashMap<>(),
                 CopyOptions.create()
                         .setIgnoreNullValue(true)
-                        .setFieldValueEditor((name,field)-> field.toString())));
-        stringRedisTemplate.expire(LOGIN_USER_KEY + token,LOGIN_USER_TTL,TimeUnit.MINUTES);
+                        .setFieldValueEditor((name, field) -> field.toString())));
+        stringRedisTemplate.expire(LOGIN_USER_KEY + token, LOGIN_USER_TTL, TimeUnit.MINUTES);
 
         return Result.ok(token);
+    }
+
+    @Override
+    public Result sign() {
+        UserDTO user = UserHolder.getUser();
+        if (user == null) {
+            return Result.fail("user is null");
+        }
+
+        String prefix = LocalDateTime.now().format(DateTimeFormatter.ofPattern(":yyyyMM"));
+        String key = USER_SIGN_KEY + user.getId() + prefix;
+
+        int dayOfMonth = LocalDateTime.now().getDayOfMonth();
+
+        stringRedisTemplate.opsForValue().setBit(key, dayOfMonth - 1, true);
+
+        return Result.ok();
+    }
+
+    @Override
+    public Result signCount() {
+        UserDTO user = UserHolder.getUser();
+        if (user == null) {
+            return Result.fail("user is null");
+        }
+
+        String prefix = LocalDateTime.now().format(DateTimeFormatter.ofPattern(":yyyyMM"));
+        String key = USER_SIGN_KEY + user.getId() + prefix;
+
+        int dayOfMonth = LocalDateTime.now().getDayOfMonth();
+
+        List<Long> result = stringRedisTemplate.opsForValue()
+                .bitField(key,
+                        BitFieldSubCommands.create().
+                                get(BitFieldSubCommands.BitFieldType.unsigned(dayOfMonth))
+                                .valueAt(0));
+
+        if (CollectionUtils.isEmpty(result)){
+            return Result.ok(0);
+        }
+
+        Long num = result.get(0);
+        if (num == 0 || num==null) {
+            return Result.ok(0);
+        }
+        int count=0;
+        while (true){
+            if ((num & 1)==0) {
+                break;
+            }else {
+                count++;
+            }
+            num>>>=1;
+        }
+
+        return Result.ok(count);
     }
 
     private User createUser(String phone) {
